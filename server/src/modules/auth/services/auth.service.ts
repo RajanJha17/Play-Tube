@@ -268,4 +268,48 @@ export class AuthService {
             });
         }
     }
+
+    async resetPassword(email: string, password: string) { 
+        try {
+            const user = await this.userModel.findOne({
+                email
+            })
+            if (!user) {
+                return new CustomResponse({
+                    statusCode: HttpStatus.NOT_FOUND,
+                    message: "User not found",
+                    data: null
+                });
+            }
+
+            if(!user.otpVerified) {
+                return new CustomResponse({
+                    statusCode: HttpStatus.UNAUTHORIZED,
+                    message: "OTP not verified",
+                    data: null
+                });
+            }
+
+            const hashedPasswrd = await bcrypt.hash(password, 10);
+            user.password = hashedPasswrd;
+            user.otpVerified = false;
+            await user.save();
+
+
+
+            return new CustomResponse({
+                statusCode: HttpStatus.OK,
+                message: "Password reset successfully",
+                data: null
+            });
+        } catch (error) {
+            console.error("Error resetting password", error)
+            return new CustomResponse({
+                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                message: "Error resetting password",
+                data: null
+            });
+            
+        }
+    }
 }
